@@ -1,11 +1,12 @@
 [package]
 name = "noted"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 
 [dependencies]
 chrono = "0.4"
 dirs = "6"
+git-version = "0.3.9"
 
 [dev-dependencies]
 tempfile = "3"

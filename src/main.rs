@@ -1,7 +1,11 @@
 use chrono::Local;
+use git_version::git_version;
 use std::env;
 use std::fs::File;
+use std::io::Result;
 use std::path::{Path, PathBuf};
+
+const _VERSION: &str = git_version!(fallback = "unknown");
 
 fn get_store_path() -> PathBuf {
     PathBuf::from(env::var("NOTED_STORE").unwrap())
@@ -12,7 +16,7 @@ fn get_daily_note_path(store_path: &Path) -> PathBuf {
     store_path.join(format!("{}.md", today))
 }
 
-fn create_daily_note(path: &PathBuf) -> std::io::Result<File> {
+fn create_daily_note(path: &PathBuf) -> Result<File> {
     File::create(path)
 }
 
