@@ -127,7 +127,7 @@ Your content here...
 
 ## Configuration
 
-`config.toml`:
+`.config/noted/config.toml`:
 
 ```toml
 [general]
@@ -155,6 +155,37 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 - **TUI mode**: Optional interactive terminal UI
 - **Backlinks**: Wiki-style `[[note]]` linking between notes
 - Allow to view tasks from notes
+
+### LLM-Powered Features
+
+#### **Search & Retrieval**
+
+- **Semantic search**: Find notes by meaning, not just keywords ("notes about that project deadline")
+- **Question answering**: Ask questions across all notes ("When did I last meet with Sarah?")
+
+#### **Writing Assistance**
+
+- **Smart summarization**: Generate weekly/monthly summaries from daily notes
+- **Auto-tagging**: Suggest tags or categories based on note content
+- **Continuation prompts**: Suggest what to write based on context and patterns
+
+#### **Organization**
+
+- **Topic extraction**: Automatically identify themes across notes over time
+- **Linking suggestions**: Surface related notes ("This note relates to your entry from March 3rd")
+- **Timeline generation**: Build narrative timelines for projects mentioned across notes
+
+#### **Reflection & Insights**
+
+- **Mood/sentiment tracking**: Analyze emotional patterns over time
+- **Goal tracking**: Extract and track progress on goals mentioned in notes
+- **Weekly digest**: Generate summaries of accomplishments based on notes
+
+#### **Practical Utilities**
+
+- **Action item extraction**: Pull out TODOs and commitments from free-form text
+- **Meeting prep**: Summarize everything noted about a topic before meetings
+- **Journal prompts**: Generate personalized prompts based on writing patterns
 
 ## Success Metrics
 
