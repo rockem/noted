@@ -1,10 +1,12 @@
 # Noted
 
-A fast, minimal CLI note-taking app with daily notes and GitHub sync.
+A fast, minimal CLI note-taking app with daily notes and Git sync.
 
 ## Overview
 
-Noted is a command-line note-taking application built in Rust. It provides a simple, distraction-free way to capture notes and maintain a daily journal, with all data stored as Markdown files and synced via GitHub.
+Noted is a command-line note-taking application built in Rust.
+It provides a simple, distraction-free way to capture notes and maintain a daily journal,
+with all data stored as Markdown files and synced via Git.
 
 ## Problem Statement
 
@@ -15,7 +17,8 @@ Existing note-taking apps are often:
 - Not keyboard-friendly for developers and terminal users
 - Missing simple daily note workflows
 
-Noted solves this by providing a fast CLI tool that stores plain Markdown files in a Git repository, giving users full control over their data.
+Noted solves this by providing a fast CLI tool that stores plain Markdown files
+in a Git repository, giving users full control over their data.
 
 ## Target Users
 
@@ -40,7 +43,7 @@ Noted solves this by providing a fast CLI tool that stores plain Markdown files 
 
 ### 3. Tags & Organization
 
-- Add tags to notes via frontmatter or inline `#tags`
+- Add tags to notes via front matter or inline `#tags`
 - Filter and list notes by tags
 - Folder-based organization support
 
@@ -70,7 +73,7 @@ Noted solves this by providing a fast CLI tool that stores plain Markdown files 
 
 ## CLI Commands
 
-```
+```text
 noted                     # Open today's daily note
 noted -c <new entry>      # Add a new entry to today's daily note
 noted new <title>         # Create a new note
@@ -89,7 +92,7 @@ noted init                # Initialize noted in current directory
 
 ## Data Structure
 
-```
+```text
 ~/.noted/                 # Default notes directory (configurable)
 ├── .git/                 # Git repository
 ├── config.toml           # Configuration file
