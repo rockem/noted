@@ -31,13 +31,14 @@ in a Git repository, giving users full control over their data.
 
 ### 1. Note Management
 
-- Create, read, edit, and delete notes
+- Create, view, edit, and delete notes
 - List all notes with filtering options
 - Open notes in your preferred editor (`$EDITOR`)
 
 ### 2. Daily Notes
 
-- Quick command to open/create today's note
+- Quick command to create/edit today's note
+- Quick add content to the daily note from command line
 - Access yesterday's note or any specific date
 - Automatic date-based file organization
 
@@ -56,8 +57,7 @@ in a Git repository, giving users full control over their data.
 ### 5. GitHub Sync
 
 - Store notes in a Git repository
-- Push/pull changes with simple commands
-- Automatic commit messages
+- Automatic sync
 - Work offline, sync when ready
 
 ## Technical Requirements
@@ -75,7 +75,7 @@ in a Git repository, giving users full control over their data.
 
 ```text
 noted                     # Open today's daily note
-noted -c <new entry>      # Add a new entry to today's daily note
+noted -e <new entry>      # Add a new entry to today's daily note
 noted new <title>         # Create a new note
 noted edit <query>        # Edit a note (alias for open)
 noted list                # List all notes
