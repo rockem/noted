@@ -17,6 +17,55 @@ Existing note-taking apps are often:
 
 Noted solves this by providing a fast CLI tool that stores plain Markdown files in a Git repository, giving users full control over their data.
 
+## Why a CLI App?
+
+A command-line interface is a deliberate choice that provides unique advantages:
+
+### Use Your Own Editor
+
+Open notes in Vim, Neovim, VS Code, Emacs, or any editor you've spent years customizing.
+Your muscle memory, keybindings, and plugins all work out of the box.
+
+### Predictable sync control
+
+Using a CLI it's very easy to predict when the syn is going to be and minimizes
+conflict and edge cases of sync issues
+
+### Shell Integration
+
+Integrate noted into your existing workflow:
+
+```bash
+# Add to daily standup script
+noted today --prep | pbcopy
+
+# Quick capture from anywhere
+alias n="noted -e"
+
+# Pipe content into notes
+git log --oneline -10 | noted -e
+
+# Use with other CLI tools
+noted search "project" | fzf | xargs noted edit
+```
+
+### Scriptable & Automatable
+
+Build workflows that GUI apps can't match:
+
+```bash
+# Cron job: daily summary at 6pm
+0 18 * * * noted summary today >> ~/daily-log.md
+
+# Git hook: create note for each branch
+noted new "branch/$(git branch --show-current)"
+```
+
+### Fast & Lightweight
+
+No Electron, no web views, no runtime. Starts instantly, runs anywhere,
+uses minimal resources. Works over SSH on remote servers.
+
 ## Target Users
 
 - Developers and terminal power users
@@ -32,7 +81,7 @@ Noted solves this by providing a fast CLI tool that stores plain Markdown files 
 - List all notes with filtering options
 - Open notes in your preferred editor (`$EDITOR`)
 
-### 2. Daily Notes
+### 2. Daily Notes (core plugin)
 
 - Quick command to open/create today's note
 - Access yesterday's note or any specific date
@@ -50,7 +99,7 @@ Noted solves this by providing a fast CLI tool that stores plain Markdown files 
 - Search by title, content, or tags
 - Fast fuzzy matching
 
-### 5. GitHub Sync
+### 5. GitHub Sync (core plugin)
 
 - Store notes in a Git repository
 - Push/pull changes with simple commands
@@ -61,14 +110,14 @@ Noted solves this by providing a fast CLI tool that stores plain Markdown files 
 
 | Requirement | Specification          |
 | ----------- | ---------------------- |
-| Language    | Rust                   |
+| Languages   | Rust, Lua              |
 | Note Format | Markdown (.md)         |
 | Storage     | Local filesystem + Git |
 | Sync        | GitHub (via git)       |
 | Config      | TOML file              |
 | Platforms   | macOS, Linux, Windows  |
 
-## CLI Commands
+## CLI Commands (core)
 
 ```bash
 noted                     # Open today's daily note
@@ -92,13 +141,14 @@ noted init                # Initialize noted in current directory
 ```
 ~/.noted/                 # Default notes directory (configurable)
 ├── .git/                 # Git repository
-├── config.toml           # Configuration file
 ├── daily/                # Daily notes
 │   └── 2026/
 │       └── 01/
 │           ├── 20.md     # Daily note for 2026-01-20
 │           └── 21.md
 ├── notes/                # Regular notes
+|   └── ideas
+|       └── shadow-env.md
 │   ├── project-ideas.md
 │   └── meeting-notes.md
 └── templates/            # Note templates (optional)
@@ -143,7 +193,7 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 2. **Work**: Notes are auto-committed on save (if enabled)
 3. **Sync**: `noted sync` pulls remote changes, rebases local, and pushes
 
-## Future Considerations
+## Future Ideas
 
 - **Templates**: Custom templates for different note types
 - **Encryption**: Optional GPG encryption for sensitive notes
@@ -151,7 +201,7 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 - **Hooks**: Pre/post save hooks for custom workflows
 - **TUI mode**: Optional interactive terminal UI
 - **Backlinks**: Wiki-style `[[note]]` linking between notes
-- Allow to view tasks from notes
+- **Tasks**: Allow to view tasks from notes
 
 ### LLM-Powered Features
 
@@ -184,12 +234,194 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 - **Meeting prep**: Summarize everything noted about a topic before meetings
 - **Journal prompts**: Generate personalized prompts based on writing patterns
 
-## Success Metrics
+### Plugin System
 
-- App launches in < 100ms
-- Note creation/opening in < 50ms
-- Full-text search across 1000+ notes in < 500ms
-- Zero data loss (Git provides history and backup)
+Noted supports a Lua-based plugin system for extensibility.
+Plugins are self-contained and require no external dependencies.
+
+#### Plugin Structure
+
+```text
+~/.config/noted/plugins/
+├── git-sync/
+│   ├── plugin.toml       # Metadata + declarations
+│   └── init.lua          # Entry point
+├── llm-search/
+│   ├── plugin.toml
+│   ├── init.lua
+│   └── lib/              # Additional modules
+│       └── embeddings.lua
+└── 1on1/
+    ├── plugin.toml
+    └── init.lua
+```
+
+#### Plugin Manifest (`plugin.toml`)
+
+```toml
+[plugin]
+name = "llm-search"
+version = "0.1.0"
+description = "Semantic search using LLMs"
+
+# Extend existing functionality
+[providers]
+search = "search_handler"
+
+# Add new commands
+[commands]
+ask = { handler = "ask_handler", description = "Ask questions about your notes" }
+
+# React to events
+[hooks]
+after_save = "on_save"
+```
+
+#### Plugin Types
+
+| Type         | Purpose                | Example                   |
+| ------------ | ---------------------- | ------------------------- |
+| **Provider** | Extend core capability | LLM search, S3 sync       |
+| **Command**  | Add new subcommand     | `noted ask`, `noted 1on1` |
+| **Hook**     | React to events        | Auto-tag on save          |
+
+#### Noted API for Plugins
+
+```lua
+noted.get_all_notes()        -- Returns all notes with metadata
+noted.get_note(path)         -- Get single note content
+noted.create_note(path, content)
+noted.config                 -- Access user config
+noted.store_path             -- Notes directory
+noted.print(text)            -- Output to user
+noted.http.get(url)          -- HTTP requests
+noted.http.post(url, body)
+```
+
+#### Plugin Management
+
+```bash
+noted plugin install https://github.com/user/llm-search  # From git
+noted plugin install ./my-plugin                          # From local path
+noted plugin list                                         # List installed
+noted plugin remove llm-search                            # Remove
+```
+
+#### Plugin Development
+
+```bash
+noted plugin new my-plugin        # Scaffold new plugin
+noted plugin dev my-plugin        # Hot reload during development
+noted plugin test my-plugin       # Run plugin tests
+noted plugin validate my-plugin   # Validate before publishing
+noted plugin repl my-plugin       # Interactive REPL with noted API
+```
+
+### Sharing Features
+
+Methods to share notes without requiring admin permissions.
+
+#### Clipboard
+
+```bash
+noted copy note.md          # Copy note content to clipboard
+noted copy today            # Copy today's daily note
+```
+
+#### Gist
+
+```bash
+noted share note.md --gist              # Create secret GitHub gist
+noted share note.md --gist --public     # Create public gist
+```
+
+#### Email (for Slack email-to-channel)
+
+```bash
+noted share note.md --email channel@workspace.slack.com
+```
+
+#### Configuration
+
+```toml
+[sharing]
+default_method = "clipboard"    # clipboard, gist, email
+gist_public = false
+
+[sharing.email]
+default_recipient = "notes-channel@company.slack.com"
+```
+
+### Example Plugins
+
+#### 1:1 Meeting Manager
+
+A plugin for managing one-on-one meetings with direct reports.
+
+```bash
+noted 1on1 alice                    # Open/create today's 1:1 with Alice
+noted 1on1 alice --prep             # Show index + last 3 meetings + open items
+noted 1on1 list                     # List all direct reports
+noted 1on1 alice --action "..."     # Add to running topics
+```
+
+Creates an index note per person with links to individual meeting notes:
+
+```markdown
+# Alice Chen
+
+Role: Senior Engineer
+Started: 2024-03
+
+## Quick Reference
+
+- Career goal: Staff Engineer
+- Current focus: Platform reliability
+
+## Recent 1:1s
+
+- [[2026-02-02]] - Project X, learning goals
+- [[2026-01-26]] - Q1 review
+
+## Running Topics
+
+- [ ] Follow up on mentorship pairing
+- [ ] Discuss promotion timeline
+```
+
+#### Git Sync
+
+Automatic Git synchronization before/after noted commands.
+
+```toml
+[plugin]
+name = "git-sync"
+
+[hooks]
+before_command = "pull_changes"
+after_command = "push_changes"
+```
+
+#### LLM Search Provider
+
+Extends the built-in search with semantic capabilities.
+
+```toml
+[plugin]
+name = "llm-search"
+
+[providers]
+search = "semantic_search"
+
+[config]
+model = "claude-3-haiku"
+api_key_env = "ANTHROPIC_API_KEY"
+```
+
+```bash
+# Unified search - uses both built-in and LLM providers
+noted search "meetings about project deadlines"
+```
 
 ## Development Phases
 
@@ -198,24 +430,18 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 - Basic note CRUD operations
 - Daily notes functionality
 - Local file storage
-
-### Phase 2: Search & Organization
-
-- Full-text search
-- Tags support
 - List filtering
 
-### Phase 3: Git Integration
+### Phase 2: Sync plugin
 
-- Git init and commit
-- Push/pull commands
-- Sync workflow
+- Basic support for internal plugins
+- First plugin: sync with git on start/end
+- New sync command for manual sync
 
-### Phase 4: Polish
+### Phase 3: Template & Sharing
 
-- Configuration system
-- Templates
-- Error handling and edge cases
+- Allow to work with templates (as a plugin?)
+- Allow to share a note via gist (as a plugin)
 
 ## License
 
