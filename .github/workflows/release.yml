@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar -czvf noted-${{ matrix.target }}.tar.gz noted
+          mv noted-${{ matrix.target }}.tar.gz ../../../
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: noted-${{ matrix.target }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release assets
+        run: |
+          VERSION="${{ github.ref_name }}"
+          BASE_URL="https://github.com/rockem/noted/releases/download/${VERSION}"
+
+          curl -L -o linux.tar.gz "${BASE_URL}/noted-x86_64-unknown-linux-gnu.tar.gz"
+          curl -L -o macos-x86.tar.gz "${BASE_URL}/noted-x86_64-apple-darwin.tar.gz"
+          curl -L -o macos-arm.tar.gz "${BASE_URL}/noted-aarch64-apple-darwin.tar.gz"
+
+      - name: Calculate SHA256
+        id: sha
+        run: |
+          echo "linux=$(sha256sum linux.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "macos_x86=$(sha256sum macos-x86.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "macos_arm=$(sha256sum macos-arm.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Trigger homebrew-tap update
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          gh workflow run update-noted.yml \
+            --repo rockem/homebrew-tap \
+            -f version="${VERSION}" \
+            -f sha_linux="${{ steps.sha.outputs.linux }}" \
+            -f sha_macos_x86="${{ steps.sha.outputs.macos_x86 }}" \
+            -f sha_macos_arm="${{ steps.sha.outputs.macos_arm }}"
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
