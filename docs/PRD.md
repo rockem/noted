@@ -1,12 +1,12 @@
 # Noted
 
-A fast, minimal CLI note-taking app with daily notes and GitHub sync.
+A fast, minimal CLI note-taking app with daily notes and Git sync.
 
 ## Overview
 
-Noted is a command-line note-taking application built in Rust. It provides a simple,
-distraction-free way to capture notes and maintain a daily journal,
-with all data stored as Markdown files and synced via GitHub.
+Noted is a command-line note-taking application built in Rust.
+It provides a simple, distraction-free way to capture notes and maintain a daily journal,
+with all data stored as Markdown files and synced via Git.
 
 ## Problem Statement
 
@@ -17,57 +17,8 @@ Existing note-taking apps are often:
 - Not keyboard-friendly for developers and terminal users
 - Missing simple daily note workflows
 
-Noted solves this by providing a fast CLI tool that stores plain Markdown files in a Git repository,
-giving users full control over their data.
-
-## Why a CLI App?
-
-A command-line interface is a deliberate choice that provides unique advantages:
-
-### Use Your Own Editor
-
-Open notes in Vim, Neovim, VS Code, Emacs, or any editor you've spent years customizing.
-Your muscle memory, keybindings, and plugins all work out of the box.
-
-### Predictable sync control
-
-Using a CLI it's very easy to predict when the syn is going to be and minimizes
-conflict and edge cases of sync issues
-
-### Shell Integration
-
-Integrate noted into your existing workflow:
-
-```bash
-# Add to daily standup script
-noted today --prep | pbcopy
-
-# Quick capture from anywhere
-alias n="noted -e"
-
-# Pipe content into notes
-git log --oneline -10 | noted -e
-
-# Use with other CLI tools
-noted search "project" | fzf | xargs noted edit
-```
-
-### Scriptable & Automatable
-
-Build workflows that GUI apps can't match:
-
-```bash
-# Cron job: daily summary at 6pm
-0 18 * * * noted summary today >> ~/daily-log.md
-
-# Git hook: create note for each branch
-noted new "branch/$(git branch --show-current)"
-```
-
-### Fast & Lightweight
-
-No Electron, no web views, no runtime. Starts instantly, runs anywhere,
-uses minimal resources. Works over SSH on remote servers.
+Noted solves this by providing a fast CLI tool that stores plain Markdown files
+in a Git repository, giving users full control over their data.
 
 ## Target Users
 
@@ -80,19 +31,20 @@ uses minimal resources. Works over SSH on remote servers.
 
 ### 1. Note Management
 
-- Create, read, edit, and delete notes
+- Create, view, edit, and delete notes
 - List all notes with filtering options
 - Open notes in your preferred editor (`$EDITOR`)
 
 ### 2. Daily Notes (core plugin)
 
-- Quick command to open/create today's note
+- Quick command to create/edit today's note
+- Quick add content to the daily note from command line
 - Access yesterday's note or any specific date
 - Automatic date-based file organization
 
 ### 3. Tags & Organization
 
-- Add tags to notes via frontmatter or inline `#tags`
+- Add tags to notes via front matter or inline `#tags`
 - Filter and list notes by tags
 - Folder-based organization support
 
@@ -105,8 +57,7 @@ uses minimal resources. Works over SSH on remote servers.
 ### 5. GitHub Sync (core plugin)
 
 - Store notes in a Git repository
-- Push/pull changes with simple commands
-- Automatic commit messages
+- Automatic sync
 - Work offline, sync when ready
 
 ## Technical Requirements
@@ -122,9 +73,9 @@ uses minimal resources. Works over SSH on remote servers.
 
 ## CLI Commands (core)
 
-```bash
+```text
 noted                     # Open today's daily note
-noted -c <new entry>      # Add a new entry to today's daily note
+noted -e <new entry>      # Add a new entry to today's daily note
 noted new <title>         # Create a new note
 noted edit <query>        # Edit a note (alias for open)
 noted list                # List all notes
@@ -141,7 +92,7 @@ noted init                # Initialize noted in current directory
 
 ## Data Structure
 
-```
+```text
 ~/.noted/                 # Default notes directory (configurable)
 ├── .git/                 # Git repository
 ├── daily/                # Daily notes
@@ -369,17 +320,6 @@ noted share note.md --gist --public     # Create public gist
 
 ```bash
 noted share note.md --email channel@workspace.slack.com
-```
-
-#### Configuration
-
-```toml
-[sharing]
-default_method = "clipboard"    # clipboard, gist, email
-gist_public = false
-
-[sharing.email]
-default_recipient = "notes-channel@company.slack.com"
 ```
 
 ### Example Plugins
