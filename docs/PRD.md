@@ -4,7 +4,9 @@ A fast, minimal CLI note-taking app with daily notes and GitHub sync.
 
 ## Overview
 
-Noted is a command-line note-taking application built in Rust. It provides a simple, distraction-free way to capture notes and maintain a daily journal, with all data stored as Markdown files and synced via GitHub.
+Noted is a command-line note-taking application built in Rust. It provides a simple,
+distraction-free way to capture notes and maintain a daily journal,
+with all data stored as Markdown files and synced via GitHub.
 
 ## Problem Statement
 
@@ -15,7 +17,8 @@ Existing note-taking apps are often:
 - Not keyboard-friendly for developers and terminal users
 - Missing simple daily note workflows
 
-Noted solves this by providing a fast CLI tool that stores plain Markdown files in a Git repository, giving users full control over their data.
+Noted solves this by providing a fast CLI tool that stores plain Markdown files in a Git repository,
+giving users full control over their data.
 
 ## Why a CLI App?
 
@@ -172,6 +175,32 @@ updated: 2026-01-22T19:02:00
 Your content here...
 ```
 
+### Frontmatter Handling
+
+Noted trusts the user with their content. If frontmatter is missing or modified:
+
+**Behavior:**
+
+- Noted will warn if frontmatter is missing or malformed
+- Noted will NOT automatically modify user content
+- File system metadata (mtime, ctime) is used as fallback for dates
+
+**Fix command:**
+
+```bash
+noted doctor                      # Checks for problems with files
+noted doctor fix my-note          # Regenerate frontmatter for a note
+noted doctor fix --all            # Fix all notes missing frontmatter
+```
+
+The `fix` command will:
+
+- Add missing frontmatter fields
+- Use file creation time for `created` if missing
+- Use file modification time for `updated` if missing
+- Extract title from first `# heading` if missing
+- Extract inline `#tags` to frontmatter tags array
+
 ## Configuration
 
 `.config/noted/config.toml`:
@@ -202,6 +231,7 @@ format = "%Y/%m/%d"               # Date format for daily note paths
 - **TUI mode**: Optional interactive terminal UI
 - **Backlinks**: Wiki-style `[[note]]` linking between notes
 - **Tasks**: Allow to view tasks from notes
+- **Quote of the day**: Insert quote of the day to daily notes
 
 ### LLM-Powered Features
 
