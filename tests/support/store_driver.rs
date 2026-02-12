@@ -1,20 +1,24 @@
+use std::env;
 use std::path::PathBuf;
-use tempfile::TempDir;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct StoreDriver {
     path: PathBuf,
-    _temp_dir: TempDir,
 }
 
 impl StoreDriver {
     pub fn new() -> Self {
-        let temp_dir = TempDir::new().expect("Failed to create temp directory");
-        let path = temp_dir.path().to_path_buf();
-
         Self {
-            path,
-            _temp_dir: temp_dir,
+            path: Self::test_store_path(),
         }
+    }
+
+    fn test_store_path() -> PathBuf {
+        let unique_id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        env::temp_dir().join(format!("noted-test-{}", unique_id))
     }
 
     pub fn path(&self) -> &PathBuf {
@@ -30,5 +34,13 @@ impl StoreDriver {
             "Expected daily note file to exist at {:?}",
             note_file
         );
+    }
+}
+
+impl Drop for StoreDriver {
+    fn drop(&mut self) {
+        if self.path.exists() {
+            std::fs::remove_dir_all(&self.path).ok();
+        }
     }
 }
