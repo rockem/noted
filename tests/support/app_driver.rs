@@ -15,13 +15,21 @@ impl AppDriver {
         }
     }
 
-    pub fn run(&self) {
-        let status = Command::cargo_bin("noted")
+    pub fn run(&self) -> String {
+        let output = Command::cargo_bin("noted")
             .expect("Failed to find noted binary")
             .env("NOTED_STORE", &self.store_path)
-            .status()
+            .env("EDITOR", "cat")
+            .output()
             .expect("Failed to execute noted");
 
-        assert!(status.success(), "noted command should succeed");
+        assert!(
+            output.status.success(),
+            "noted command should succeed\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        String::from_utf8_lossy(&output.stdout).to_string()
     }
 }
