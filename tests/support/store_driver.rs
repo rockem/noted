@@ -13,6 +13,12 @@ impl StoreDriver {
         }
     }
 
+    pub fn new_with_create() -> Self {
+        let path = Self::test_store_path();
+        std::fs::create_dir_all(&path).unwrap();
+        Self { path }
+    }
+
     fn test_store_path() -> PathBuf {
         let unique_id = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -32,13 +38,19 @@ impl StoreDriver {
         path
     }
 
-    fn today_note_path(&self) -> PathBuf {
+    pub fn today_note_path(&self) -> PathBuf {
         let now = chrono::Local::now();
         self.path
             .join("daily")
             .join(now.format("%Y").to_string())
             .join(now.format("%m").to_string())
             .join(format!("{}.md", now.format("%Y-%m-%d")))
+    }
+
+    pub fn make_read_only(&self) {
+        use std::os::unix::fs::PermissionsExt;
+        let permissions = std::fs::Permissions::from_mode(0o444);
+        std::fs::set_permissions(&self.path, permissions).unwrap();
     }
 
     pub fn today_note_file_created(&self) {
@@ -54,6 +66,9 @@ impl StoreDriver {
 impl Drop for StoreDriver {
     fn drop(&mut self) {
         if self.path.exists() {
+            use std::os::unix::fs::PermissionsExt;
+            let permissions = std::fs::Permissions::from_mode(0o755);
+            std::fs::set_permissions(&self.path, permissions).ok();
             std::fs::remove_dir_all(&self.path).ok();
         }
     }

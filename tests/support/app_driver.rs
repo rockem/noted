@@ -4,6 +4,12 @@ use assert_cmd::cargo::CommandCargoExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+pub struct AppOutput {
+    pub success: bool,
+    pub stdout: String,
+    pub stderr: String,
+}
+
 pub struct AppDriver {
     store_path: PathBuf,
 }
@@ -15,7 +21,7 @@ impl AppDriver {
         }
     }
 
-    pub fn run(&self) -> String {
+    pub fn run(&self) -> AppOutput {
         let output = Command::cargo_bin("noted")
             .expect("Failed to find noted binary")
             .env("NOTED_STORE", &self.store_path)
@@ -23,13 +29,10 @@ impl AppDriver {
             .output()
             .expect("Failed to execute noted");
 
-        assert!(
-            output.status.success(),
-            "noted command should succeed\nstdout: {}\nstderr: {}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-
-        String::from_utf8_lossy(&output.stdout).to_string()
+        AppOutput {
+            success: output.status.success(),
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        }
     }
 }
