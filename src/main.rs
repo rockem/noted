@@ -10,6 +10,15 @@ const _VERSION: &str = git_version!(fallback = "unknown");
 const _DEFAULT_STORE_PATH: &str = "noted";
 const _DEFAULT_EDITOR: &str = "vim";
 
+fn main() {
+    let store_path = get_store_path();
+    let daily_note_path = get_daily_note_path(&store_path);
+
+    let _ = fs::create_dir_all(daily_note_path.parent().unwrap());
+
+    open_editor(&daily_note_path);
+}
+
 fn get_store_path() -> PathBuf {
     env::var("NOTED_STORE")
         .map(PathBuf::from)
@@ -28,13 +37,4 @@ fn get_daily_note_path(store_path: &Path) -> PathBuf {
 fn open_editor(path: &Path) {
     let editor = env::var("EDITOR").unwrap_or_else(|_| _DEFAULT_EDITOR.to_string());
     Command::new(&editor).arg(path).status().unwrap();
-}
-
-fn main() {
-    let store_path = get_store_path();
-    let daily_note_path = get_daily_note_path(&store_path);
-
-    let _ = fs::create_dir_all(daily_note_path.parent().unwrap());
-
-    open_editor(&daily_note_path);
 }

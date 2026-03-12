@@ -13,7 +13,7 @@ fn create_daily_note_file() {
     let (app, store) = setup();
     let output = app.run();
     assert!(
-        !output.success,
+        output.success,
         "noted command should succeed\nstderr: {}",
         output.stderr
     );
@@ -32,19 +32,19 @@ fn edit_existing_daily_note() {
     assert!(output.stdout.contains(expected_content));
 }
 
-// #[test]
-// fn fail_to_create_daily_note() {
-//     let store = StoreDriver::new_with_create();
-//     let app = AppDriver::new(store.path());
-//
-//     store.make_read_only();
-//
-//     let output = app.run();
-//
-//     assert!(!output.success);
-//     assert!(
-//         output.stderr.contains("Error: Failed to create daily note"),
-//         "Expected error message in stderr, got: {}",
-//         output.stderr
-//     );
-// }
+#[test]
+fn fail_to_create_daily_note() {
+    let store = StoreDriver::new_with_create();
+    let app = AppDriver::new(store.path());
+
+    store.make_read_only();
+
+    let output = app.run();
+
+    assert!(!output.success);
+    assert!(
+        output.stderr.contains("Error: Failed to create daily note"),
+        "Expected error message in stderr, got: {}",
+        output.stderr
+    );
+}
