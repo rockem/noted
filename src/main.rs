@@ -1,7 +1,7 @@
 use chrono::Local;
 use git_version::git_version;
 use std::env;
-use std::fs::{self, OpenOptions};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -25,12 +25,6 @@ fn get_daily_note_path(store_path: &Path) -> PathBuf {
         .join(format!("{}.md", now.format("%Y-%m-%d")))
 }
 
-fn create_daily_note_if_needed(path: &Path) {
-    if !path.exists() {
-        let _ = OpenOptions::new().write(true).create_new(true).open(path);
-    }
-}
-
 fn open_editor(path: &Path) {
     let editor = env::var("EDITOR").unwrap_or_else(|_| _DEFAULT_EDITOR.to_string());
     Command::new(&editor).arg(path).status().unwrap();
@@ -42,6 +36,5 @@ fn main() {
 
     let _ = fs::create_dir_all(daily_note_path.parent().unwrap());
 
-    create_daily_note_if_needed(&daily_note_path);
     open_editor(&daily_note_path);
 }

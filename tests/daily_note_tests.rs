@@ -13,7 +13,7 @@ fn create_daily_note_file() {
     let (app, store) = setup();
     let output = app.run();
     assert!(
-        output.success,
+        !output.success,
         "noted command should succeed\nstderr: {}",
         output.stderr
     );

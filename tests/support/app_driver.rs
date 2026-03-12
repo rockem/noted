@@ -4,6 +4,8 @@ use assert_cmd::cargo::CommandCargoExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+const TEST_EDITOR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/support/test_editor.sh");
+
 pub struct AppOutput {
     pub success: bool,
     pub stdout: String,
@@ -25,7 +27,7 @@ impl AppDriver {
         let output = Command::cargo_bin("noted")
             .expect("Failed to find noted binary")
             .env("NOTED_STORE", &self.store_path)
-            .env("EDITOR", "cat")
+            .env("EDITOR", TEST_EDITOR)
             .output()
             .expect("Failed to execute noted");
 
