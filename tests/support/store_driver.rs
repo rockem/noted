@@ -1,6 +1,12 @@
-use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, fs};
+
+fn set_readonly(path: &Path, readonly: bool) -> std::io::Result<()> {
+    let mut perms = fs::metadata(path)?.permissions();
+    perms.set_readonly(readonly);
+    fs::set_permissions(path, perms)
+}
 
 pub struct StoreDriver {
     path: PathBuf,
@@ -48,9 +54,7 @@ impl StoreDriver {
     }
 
     pub fn make_read_only(&self) {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = std::fs::Permissions::from_mode(0o444);
-        std::fs::set_permissions(&self.path, permissions).unwrap();
+        let _ = set_readonly(&self.path, true);
     }
 
     pub fn today_note_file_created(&self) {
@@ -66,9 +70,7 @@ impl StoreDriver {
 impl Drop for StoreDriver {
     fn drop(&mut self) {
         if self.path.exists() {
-            use std::os::unix::fs::PermissionsExt;
-            let permissions = std::fs::Permissions::from_mode(0o755);
-            std::fs::set_permissions(&self.path, permissions).ok();
+            let _ = set_readonly(&self.path, false);
             std::fs::remove_dir_all(&self.path).ok();
         }
     }
