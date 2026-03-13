@@ -40,7 +40,7 @@ cargo clippy
 
 ### Test Infrastructure
 
-This project us TDD skill to develop and testing
+This project uses TDD practices for development and testing.
 Component tests use a driver pattern in `tests/support/`:
 
 - **AppDriver** (`app_driver.rs`) - Wraps the `noted` binary execution. Sets `NOTED_STORE` env var and runs the CLI.
