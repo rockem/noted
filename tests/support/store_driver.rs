@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, fs};
@@ -10,19 +11,24 @@ fn set_readonly(path: &Path, readonly: bool) -> std::io::Result<()> {
 
 pub struct StoreDriver {
     path: PathBuf,
+    today: NaiveDate,
 }
 
 impl StoreDriver {
     pub fn new() -> Self {
         Self {
             path: Self::test_store_path(),
+            today: chrono::Local::now().date_naive(),
         }
     }
 
     pub fn new_with_create() -> Self {
         let path = Self::test_store_path();
         std::fs::create_dir_all(&path).unwrap();
-        Self { path }
+        Self {
+            path,
+            today: chrono::Local::now().date_naive(),
+        }
     }
 
     fn test_store_path() -> PathBuf {
@@ -45,12 +51,11 @@ impl StoreDriver {
     }
 
     pub fn today_note_path(&self) -> PathBuf {
-        let now = chrono::Local::now();
         self.path
             .join("daily")
-            .join(now.format("%Y").to_string())
-            .join(now.format("%m").to_string())
-            .join(format!("{}.md", now.format("%Y-%m-%d")))
+            .join(self.today.format("%Y").to_string())
+            .join(self.today.format("%m").to_string())
+            .join(format!("{}.md", self.today.format("%Y-%m-%d")))
     }
 
     pub fn make_read_only(&self) {
