@@ -14,7 +14,10 @@ fn main() {
     let store_path = get_store_path();
     let daily_note_path = get_daily_note_path(&store_path);
 
-    let _ = fs::create_dir_all(daily_note_path.parent().unwrap());
+    if let Err(e) = fs::create_dir_all(daily_note_path.parent().unwrap()) {
+        eprintln!("Error: Failed to create daily note: {}", e);
+        std::process::exit(1);
+    }
 
     open_editor(&daily_note_path);
 }
