@@ -40,13 +40,14 @@ cargo clippy
 
 ### Test Infrastructure
 
-Tests use a driver pattern in `tests/support/`:
+This project uses TDD practices for development and testing.
+Component tests use a driver pattern in `tests/support/`:
 
 - **AppDriver** (`app_driver.rs`) - Wraps the `noted` binary execution. Sets `NOTED_STORE` env var and runs the CLI.
 - **StoreDriver** (`store_driver.rs`) - Manages a temporary notes directory. Creates temp dir,
   provides assertions for file existence.
 
-Integration tests run the actual binary via `assert_cmd` crate.
+Component tests run the actual binary via `assert_cmd` crate.
 
 Example test pattern:
 
