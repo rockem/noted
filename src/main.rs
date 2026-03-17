@@ -1,21 +1,26 @@
 use chrono::Local;
-use git_version::git_version;
+use clap::Parser;
+use noted::errors;
+use noted::version::VERSION;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const _VERSION: &str = git_version!(fallback = "unknown");
-
 const _DEFAULT_STORE_PATH: &str = "noted";
 const _DEFAULT_EDITOR: &str = "vim";
 
+#[derive(Parser, Debug)]
+#[command(name = "noted", version = VERSION)]
+struct Cli {}
+
 fn main() {
+    let _cli = Cli::parse();
     let store_path = get_store_path();
     let daily_note_path = get_daily_note_path(&store_path);
 
     if let Err(e) = fs::create_dir_all(daily_note_path.parent().unwrap()) {
-        eprintln!("Error: Failed to create daily note: {}", e);
+        eprintln!("{}: {}", errors::DAILY_NOTE_CREATE_FAILED, e);
         std::process::exit(1);
     }
 
