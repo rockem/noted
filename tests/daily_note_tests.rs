@@ -1,4 +1,6 @@
 mod support;
+use noted::errors::DAILY_NOTE_CREATE_FAILED;
+use noted::version::VERSION;
 
 use support::{AppDriver, StoreDriver};
 
@@ -11,12 +13,7 @@ fn setup() -> (AppDriver, StoreDriver) {
 #[test]
 fn create_daily_note_file() {
     let (app, store) = setup();
-    let output = app.run();
-    assert!(
-        output.success,
-        "noted command should succeed\nstderr: {}",
-        output.stderr
-    );
+    app.run().unwrap();
     store.today_note_file_created();
 }
 
@@ -27,7 +24,7 @@ fn edit_existing_daily_note() {
     let expected_content = "existing content";
 
     store.create_today_note(expected_content);
-    let output = app.run();
+    let output = app.run().unwrap();
 
     assert!(output.stdout.contains(expected_content));
 }
@@ -39,12 +36,23 @@ fn fail_to_create_daily_note() {
 
     store.make_read_only();
 
-    let output = app.run();
+    let err = app.run().expect_err("Expected to fail");
 
-    assert!(!output.success);
     assert!(
-        output.stderr.contains("Error: Failed to create daily note"),
+        err.contains(DAILY_NOTE_CREATE_FAILED),
         "Expected error message in stderr, got: {}",
-        output.stderr
+        err
+    );
+}
+
+#[test]
+fn show_version() {
+    let (app, _store) = setup();
+    let output = app.run_with_args(&["--version"]).unwrap();
+
+    assert!(
+        output.stdout.contains(VERSION),
+        "Expected version in stdout, got: {}",
+        output.stdout
     );
 }
