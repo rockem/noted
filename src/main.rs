@@ -4,6 +4,7 @@ use noted::errors;
 use noted::version::VERSION;
 use std::env;
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -13,12 +14,12 @@ const _DEFAULT_EDITOR: &str = "vim";
 #[derive(Parser, Debug)]
 #[command(name = "noted", version = VERSION)]
 struct Cli {
-    #[arg(short = 'e', num_args = 1.., value_delimiter = ' ')]
+    #[arg(short = 'e', num_args = 1..)]
     text: Option<Vec<String>>,
 }
 
 fn main() {
-    let _cli = Cli::parse();
+    let cli = Cli::parse();
     let store_path = get_store_path();
     let daily_note_path = get_daily_note_path(&store_path);
 
@@ -27,7 +28,12 @@ fn main() {
         std::process::exit(1);
     }
 
-    open_editor(&daily_note_path);
+    if let Some(words) = cli.text {
+        let text = words.join(" ");
+        quick_capture(&daily_note_path, &text);
+    } else {
+        open_editor(&daily_note_path);
+    }
 }
 
 fn get_store_path() -> PathBuf {
@@ -43,6 +49,19 @@ fn get_daily_note_path(store_path: &Path) -> PathBuf {
         .join(now.format("%Y").to_string())
         .join(now.format("%m").to_string())
         .join(format!("{}.md", now.format("%Y-%m-%d")))
+}
+
+fn quick_capture(path: &Path, text: &str) {
+    let mut file = fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(path)
+        .unwrap();
+    let existing = fs::read(path).unwrap_or_default();
+    if !existing.is_empty() && existing.last() != Some(&b'\n') {
+        writeln!(file).unwrap();
+    }
+    writeln!(file, "{}", text).unwrap();
 }
 
 fn open_editor(path: &Path) {

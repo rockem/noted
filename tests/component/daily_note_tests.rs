@@ -1,4 +1,5 @@
 use noted::errors::DAILY_NOTE_CREATE_FAILED;
+use regex::Regex;
 
 use crate::support::{AppDriver, StoreDriver};
 
@@ -47,4 +48,22 @@ fn quick_capture_creates_daily_note_if_not_exists() {
 
     app.run_with_args(&["-e", capture_text]).unwrap();
     assert!(store.today_note_content().contains(capture_text));
+}
+
+#[test]
+fn quick_capture_appends_to_existing_note() {
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path());
+    store.create_today_note("existing content");
+
+    app.run_with_args(&["-e", "appended text"]).unwrap();
+
+    let content = store.today_note_content();
+    assert!(
+        Regex::new(r"existing content\n+appended text")
+            .unwrap()
+            .is_match(&content),
+        "text wasn't matched in: {}",
+        &content
+    );
 }
