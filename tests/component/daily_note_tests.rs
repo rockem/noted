@@ -1,25 +1,19 @@
-mod support;
 use noted::errors::DAILY_NOTE_CREATE_FAILED;
-use noted::version::VERSION;
 
-use support::{AppDriver, StoreDriver};
-
-fn setup() -> (AppDriver, StoreDriver) {
-    let store = StoreDriver::new();
-    let app = AppDriver::new(store.path());
-    (app, store)
-}
+use crate::support::{AppDriver, StoreDriver};
 
 #[test]
 fn create_daily_note_file() {
-    let (app, store) = setup();
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path()).with_editor("touch");
     app.run().unwrap();
     store.today_note_file_created();
 }
 
 #[test]
 fn edit_existing_daily_note() {
-    let (app, store) = setup();
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path()).with_editor("cat");
 
     let expected_content = "existing content";
 
@@ -30,7 +24,7 @@ fn edit_existing_daily_note() {
 }
 
 #[test]
-fn fail_to_create_daily_note() {
+fn fail_to_create_daily_note_path() {
     let store = StoreDriver::new_with_create();
     let app = AppDriver::new(store.path());
 
@@ -46,13 +40,11 @@ fn fail_to_create_daily_note() {
 }
 
 #[test]
-fn show_version() {
-    let (app, _store) = setup();
-    let output = app.run_with_args(&["--version"]).unwrap();
+fn quick_capture_creates_daily_note_if_not_exists() {
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path());
+    let capture_text = "some text";
 
-    assert!(
-        output.stdout.contains(VERSION),
-        "Expected version in stdout, got: {}",
-        output.stdout
-    );
+    app.run_with_args(&["-e", capture_text]).unwrap();
+    assert!(store.today_note_content().contains(capture_text));
 }

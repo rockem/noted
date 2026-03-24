@@ -12,7 +12,10 @@ const _DEFAULT_EDITOR: &str = "vim";
 
 #[derive(Parser, Debug)]
 #[command(name = "noted", version = VERSION)]
-struct Cli {}
+struct Cli {
+    #[arg(short = 'e', num_args = 1.., value_delimiter = ' ')]
+    text: Option<Vec<String>>,
+}
 
 fn main() {
     let _cli = Cli::parse();
