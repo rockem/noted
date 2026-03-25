@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use chrono::Local;
 use clap::Parser;
 use noted::errors;
@@ -8,8 +9,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const _DEFAULT_STORE_PATH: &str = "noted";
-const _DEFAULT_EDITOR: &str = "vim";
+const DEFAULT_STORE_PATH: &str = "noted";
+const DEFAULT_EDITOR: &str = "vim";
 
 #[derive(Parser, Debug)]
 #[command(name = "noted", version = VERSION)]
@@ -39,7 +40,7 @@ fn main() {
 fn get_store_path() -> PathBuf {
     env::var("NOTED_STORE")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::data_dir().unwrap().join(_DEFAULT_STORE_PATH))
+        .unwrap_or_else(|_| dirs::data_dir().unwrap().join(DEFAULT_STORE_PATH))
 }
 
 fn get_daily_note_path(store_path: &Path) -> PathBuf {
@@ -57,14 +58,15 @@ fn quick_capture(path: &Path, text: &str) {
         .create(true)
         .open(path)
         .unwrap();
-    let existing = fs::read(path).unwrap_or_default();
-    if !existing.is_empty() && existing.last() != Some(&b'\n') {
-        writeln!(file).unwrap();
-    }
-    writeln!(file, "{}", text).unwrap();
+    writeln!(file).unwrap();
+    writeln!(file, "{}", format_entry(Local::now(), "", text)).unwrap();
+}
+
+fn format_entry(_time: DateTime<Local>, _existing_text: &str, entry_text: &str) -> String {
+    entry_text.to_string()
 }
 
 fn open_editor(path: &Path) {
-    let editor = env::var("EDITOR").unwrap_or_else(|_| _DEFAULT_EDITOR.to_string());
+    let editor = env::var("EDITOR").unwrap_or_else(|_| DEFAULT_EDITOR.to_string());
     Command::new(&editor).arg(path).status().unwrap();
 }
