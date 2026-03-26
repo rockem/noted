@@ -60,7 +60,7 @@ fn quick_capture_appends_to_existing_note() {
 
     let content = store.today_note_content();
     assert!(
-        Regex::new(r"existing content\n+appended text")
+        Regex::new(r"existing content\n.*appended text")
             .unwrap()
             .is_match(&content),
         "text wasn't matched in: {}",

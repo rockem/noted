@@ -5,7 +5,7 @@ use noted::errors;
 use noted::version::VERSION;
 use std::env;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -54,19 +54,55 @@ fn get_daily_note_path(store_path: &Path) -> PathBuf {
 
 fn quick_capture(path: &Path, text: &str) {
     let mut file = fs::OpenOptions::new()
+        .read(true)
         .append(true)
         .create(true)
         .open(path)
         .unwrap();
-    writeln!(file).unwrap();
-    writeln!(file, "{}", format_entry(Local::now(), "", text)).unwrap();
+    let mut existing = String::new();
+    file.read_to_string(&mut existing).unwrap();
+    writeln!(file, "{}", format_entry(Local::now(), &existing, text)).unwrap();
 }
 
-fn format_entry(_time: DateTime<Local>, _existing_text: &str, entry_text: &str) -> String {
-    entry_text.to_string()
+fn format_entry(time: DateTime<Local>, existing_text: &str, entry_text: &str) -> String {
+    let prefix = if existing_text.is_empty() || existing_text.ends_with('\n') {
+        ""
+    } else {
+        "\n"
+    };
+    format!("{}**{}** {}", prefix, time.format("%H:%M"), entry_text)
 }
 
 fn open_editor(path: &Path) {
     let editor = env::var("EDITOR").unwrap_or_else(|_| DEFAULT_EDITOR.to_string());
     Command::new(&editor).arg(path).status().unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    #[test]
+    fn format_entry_prepends_bold_time() {
+        verify_entry_format("", "some text", "**14:30** some text");
+    }
+
+    fn verify_entry_format(existing_text: &str, entry_text: &str, expected_text: &str) {
+        let fixed_time = Local.with_ymd_and_hms(2026, 3, 26, 14, 30, 0).unwrap();
+        assert_eq!(
+            format_entry(fixed_time, existing_text, entry_text),
+            expected_text
+        );
+    }
+
+    #[test]
+    fn format_entry_adds_newline_when_existing_content() {
+        verify_entry_format("existing content", "some text", "\n**14:30** some text")
+    }
+
+    #[test]
+    fn format_entry_no_extra_newline_when_existing_ends_with_newline() {
+        verify_entry_format("existing content\n", "some text", "**14:30** some text")
+    }
 }
