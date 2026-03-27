@@ -51,6 +51,16 @@ fn quick_capture_creates_daily_note_if_not_exists() {
 }
 
 #[test]
+fn quick_capture_with_piped_input() {
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path());
+
+    app.run_with_stdin(&["-e"], "piped text").unwrap();
+
+    assert!(store.today_note_content().contains("piped text"));
+}
+
+#[test]
 fn quick_capture_appends_to_existing_note() {
     let store = StoreDriver::new();
     let app = AppDriver::new(store.path());

@@ -1,5 +1,6 @@
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[derive(Debug)]
 pub struct AppOutput {
@@ -37,11 +38,30 @@ impl AppDriver {
             .output()
             .map_err(|err| format!("Failed to execute noted: {err}"))?;
 
+        Self::to_app_output(output)
+    }
+
+    pub fn run_with_stdin(&self, args: &[&str], stdin: &str) -> Result<AppOutput, String> {
+        let mut child = Command::new(assert_cmd::cargo::cargo_bin!("noted"))
+            .env("NOTED_STORE", &self.store_path)
+            .env("EDITOR", &self.editor)
+            .args(args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|err| format!("Failed to execute noted: {err}"))?;
+
+        child.stdin.take().unwrap().write_all(stdin.as_bytes()).ok();
+
+        Self::to_app_output(child.wait_with_output().map_err(|e| e.to_string())?)
+    }
+
+    fn to_app_output(output: std::process::Output) -> Result<AppOutput, String> {
         let app_output = AppOutput {
             stdout: String::from_utf8_lossy(&output.stdout).to_string(),
             stderr: String::from_utf8_lossy(&output.stderr).to_string(),
         };
-
         if output.status.success() {
             Ok(app_output)
         } else {

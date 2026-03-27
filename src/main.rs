@@ -15,7 +15,7 @@ const DEFAULT_EDITOR: &str = "vim";
 #[derive(Parser, Debug)]
 #[command(name = "noted", version = VERSION)]
 struct Cli {
-    #[arg(short = 'e', num_args = 1..)]
+    #[arg(short = 'e', num_args = 0..)]
     text: Option<Vec<String>>,
 }
 
@@ -30,7 +30,13 @@ fn main() {
     }
 
     if let Some(words) = cli.text {
-        let text = words.join(" ");
+        let text = if words.is_empty() {
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            s.trim().to_string()
+        } else {
+            words.join(" ")
+        };
         quick_capture(&daily_note_path, &text);
     } else {
         open_editor(&daily_note_path);
