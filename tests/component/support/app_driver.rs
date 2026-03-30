@@ -41,6 +41,18 @@ impl AppDriver {
         Self::to_app_output(output)
     }
 
+    fn to_app_output(output: std::process::Output) -> Result<AppOutput, String> {
+        let app_output = AppOutput {
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+        };
+        if output.status.success() {
+            Ok(app_output)
+        } else {
+            Err(app_output.stderr.clone())
+        }
+    }
+
     pub fn run_with_stdin(&self, args: &[&str], stdin: &str) -> Result<AppOutput, String> {
         let mut child = Command::new(assert_cmd::cargo::cargo_bin!("noted"))
             .env("NOTED_STORE", &self.store_path)
@@ -55,17 +67,5 @@ impl AppDriver {
         child.stdin.take().unwrap().write_all(stdin.as_bytes()).ok();
 
         Self::to_app_output(child.wait_with_output().map_err(|e| e.to_string())?)
-    }
-
-    fn to_app_output(output: std::process::Output) -> Result<AppOutput, String> {
-        let app_output = AppOutput {
-            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-        };
-        if output.status.success() {
-            Ok(app_output)
-        } else {
-            Err(app_output.stderr.clone())
-        }
     }
 }
