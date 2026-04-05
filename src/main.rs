@@ -5,6 +5,7 @@ use noted::errors;
 use noted::version::VERSION;
 use std::env;
 use std::fs;
+use std::io::IsTerminal;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -30,16 +31,28 @@ fn main() {
     }
 
     if let Some(words) = cli.text {
-        let text = if words.is_empty() {
-            let mut s = String::new();
-            std::io::stdin().read_to_string(&mut s).unwrap();
-            s.trim().to_string()
-        } else {
-            words.join(" ")
-        };
-        quick_capture(&daily_note_path, &text);
+        match resolve_capture_text(words, std::io::stdin().is_terminal()) {
+            Ok(text) => quick_capture(&daily_note_path, &text),
+            Err(msg) => {
+                eprintln!("{msg}");
+                std::process::exit(1);
+            }
+        }
     } else {
         open_editor(&daily_note_path);
+    }
+}
+
+fn resolve_capture_text(words: Vec<String>, is_tty: bool) -> Result<String, String> {
+    if words.is_empty() {
+        if is_tty {
+            return Err("-e flag requires text or piped input".to_string());
+        }
+        let mut s = String::new();
+        std::io::stdin().read_to_string(&mut s).unwrap();
+        Ok(s.trim().to_string())
+    } else {
+        Ok(words.join(" "))
     }
 }
 
@@ -110,5 +123,18 @@ mod tests {
     #[test]
     fn format_entry_no_extra_newline_when_existing_ends_with_newline() {
         verify_entry_format("existing content\n", "some text", "**14:30** some text")
+    }
+
+    #[test]
+    fn e_flag_tty_with_no_text_returns_error() {
+        assert!(resolve_capture_text(vec![], true).is_err());
+    }
+
+    #[test]
+    fn e_flag_with_text_ignores_tty() {
+        assert_eq!(
+            resolve_capture_text(vec!["hello".into()], true).unwrap(),
+            "hello"
+        );
     }
 }

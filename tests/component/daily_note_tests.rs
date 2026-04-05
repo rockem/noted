@@ -34,9 +34,9 @@ fn fail_to_create_daily_note_path() {
     let err = app.run().expect_err("Expected to fail");
 
     assert!(
-        err.contains(DAILY_NOTE_CREATE_FAILED),
+        err.stderr.contains(DAILY_NOTE_CREATE_FAILED),
         "Expected error message in stderr, got: {}",
-        err
+        err.stderr
     );
 }
 
@@ -75,5 +75,17 @@ fn quick_capture_appends_to_existing_note() {
             .is_match(&content),
         "text wasn't matched in: {}",
         &content
+    );
+}
+
+#[test]
+fn fail_on_quick_capture_with_no_text() {
+    let store = StoreDriver::new();
+    let app = AppDriver::new(store.path());
+    let err = app.run_in_pty(&["-e"]).expect_err("Expected to fail");
+    assert!(
+        err.stdout.contains("-e flag requires text or piped input"),
+        "Expected error message in output, got: {}",
+        err.stdout
     );
 }
