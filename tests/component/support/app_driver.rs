@@ -38,6 +38,7 @@ impl AppDriver {
         self
     }
 
+    #[allow(dead_code)]
     pub fn run(&self) -> Result<AppOutput, AppOutput> {
         self.run_with_args(&[])
     }
