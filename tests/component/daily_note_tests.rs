@@ -7,7 +7,7 @@ use crate::support::{AppDriver, StoreDriver};
 fn create_daily_note_file() {
     let store = StoreDriver::new();
     let app = AppDriver::new(store.path()).with_editor("touch");
-    app.run().unwrap();
+    app.run_with_args(&["daily"]).unwrap();
     store.today_note_file_created();
 }
 
@@ -19,7 +19,7 @@ fn edit_existing_daily_note() {
     let expected_content = "existing content";
 
     store.create_today_note(expected_content);
-    let output = app.run().unwrap();
+    let output = app.run_with_args(&["daily"]).unwrap();
 
     assert!(output.stdout.contains(expected_content));
 }
@@ -31,7 +31,7 @@ fn fail_to_create_daily_note_path() {
 
     store.make_read_only();
 
-    let err = app.run().expect_err("Expected to fail");
+    let err = app.run_with_args(&["daily"]).expect_err("Expected to fail");
 
     assert!(
         err.stderr.contains(DAILY_NOTE_CREATE_FAILED),
@@ -46,7 +46,7 @@ fn quick_capture_creates_daily_note_if_not_exists() {
     let app = AppDriver::new(store.path());
     let capture_text = "some text";
 
-    app.run_with_args(&["-e", capture_text]).unwrap();
+    app.run_with_args(&["daily", "-e", capture_text]).unwrap();
     assert!(store.today_note_content().contains(capture_text));
 }
 
@@ -55,7 +55,8 @@ fn quick_capture_with_piped_input() {
     let store = StoreDriver::new();
     let app = AppDriver::new(store.path());
 
-    app.run_with_stdin(&["-e"], "piped text").unwrap();
+    app.run_with_stdin(&["daily", "-e", "-"], "piped text")
+        .unwrap();
 
     assert!(store.today_note_content().contains("piped text"));
 }
@@ -66,7 +67,8 @@ fn quick_capture_appends_to_existing_note() {
     let app = AppDriver::new(store.path());
     store.create_today_note("existing content");
 
-    app.run_with_args(&["-e", "appended text"]).unwrap();
+    app.run_with_args(&["daily", "-e", "appended text"])
+        .unwrap();
 
     let content = store.today_note_content();
     assert!(
@@ -75,17 +77,5 @@ fn quick_capture_appends_to_existing_note() {
             .is_match(&content),
         "text wasn't matched in: {}",
         &content
-    );
-}
-
-#[test]
-fn fail_on_quick_capture_with_no_text() {
-    let store = StoreDriver::new();
-    let app = AppDriver::new(store.path());
-    let err = app.run_in_pty(&["-e"]).expect_err("Expected to fail");
-    assert!(
-        err.stdout.contains("-e flag requires text or piped input"),
-        "Expected error message in output, got: {}",
-        err.stdout
     );
 }

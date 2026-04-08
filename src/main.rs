@@ -1,11 +1,10 @@
 use chrono::DateTime;
 use chrono::Local;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use noted::errors;
 use noted::version::VERSION;
 use std::env;
 use std::fs;
-use std::io::IsTerminal;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -16,12 +15,26 @@ const DEFAULT_EDITOR: &str = "vim";
 #[derive(Parser, Debug)]
 #[command(name = "noted", version = VERSION)]
 struct Cli {
-    #[arg(short = 'e', num_args = 0..)]
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    #[command(alias = "d", about = "Create or edit today's daily note")]
+    Daily(DailyArgs),
+}
+
+#[derive(Parser, Debug)]
+struct DailyArgs {
+    #[arg(short = 'e', num_args = 0.., help = "Quick capture text. Use '-' to read from stdin.")]
     text: Option<Vec<String>>,
 }
 
 fn main() {
     let cli = Cli::parse();
+    let Commands::Daily(args) = cli.command;
+
     let store_path = get_store_path();
     let daily_note_path = get_daily_note_path(&store_path);
 
@@ -30,8 +43,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    if let Some(words) = cli.text {
-        match resolve_capture_text(words, std::io::stdin().is_terminal()) {
+    if let Some(words) = args.text {
+        match resolve_capture_text(words) {
             Ok(text) => quick_capture(&daily_note_path, &text),
             Err(msg) => {
                 eprintln!("{msg}");
@@ -43,16 +56,15 @@ fn main() {
     }
 }
 
-fn resolve_capture_text(words: Vec<String>, is_tty: bool) -> Result<String, String> {
-    if words.is_empty() {
-        if is_tty {
-            return Err("-e flag requires text or piped input".to_string());
+fn resolve_capture_text(words: Vec<String>) -> Result<String, String> {
+    match words.as_slice() {
+        [] => Err("-e flag requires text or \"-\" for stdin".to_string()),
+        [dash] if dash == "-" => {
+            let mut s = String::new();
+            std::io::stdin().read_to_string(&mut s).unwrap();
+            Ok(s.trim().to_string())
         }
-        let mut s = String::new();
-        std::io::stdin().read_to_string(&mut s).unwrap();
-        Ok(s.trim().to_string())
-    } else {
-        Ok(words.join(" "))
+        _ => Ok(words.join(" ")),
     }
 }
 
@@ -126,15 +138,12 @@ mod tests {
     }
 
     #[test]
-    fn e_flag_tty_with_no_text_returns_error() {
-        assert!(resolve_capture_text(vec![], true).is_err());
+    fn e_flag_with_no_text_returns_error() {
+        assert!(resolve_capture_text(vec![]).is_err());
     }
 
     #[test]
-    fn e_flag_with_text_ignores_tty() {
-        assert_eq!(
-            resolve_capture_text(vec!["hello".into()], true).unwrap(),
-            "hello"
-        );
+    fn e_flag_with_text_returns_text() {
+        assert_eq!(resolve_capture_text(vec!["hello".into()]).unwrap(), "hello");
     }
 }
