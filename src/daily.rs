@@ -16,7 +16,7 @@ pub fn resolve_capture_text(words: Vec<String>) -> Result<String, String> {
         [dash] if dash == "-" => {
             let mut s = String::new();
             std::io::stdin().read_to_string(&mut s).unwrap();
-            Ok(s.trim().to_string())
+            Ok(s.to_string())
         }
         _ => Ok(words.join(" ")),
     }
@@ -51,6 +51,14 @@ mod tests {
         verify_entry_format("existing content\n", "some text", "**14:30** some text")
     }
 
+    fn verify_entry_format(existing_text: &str, entry_text: &str, expected_text: &str) {
+        let fixed_time = Local.with_ymd_and_hms(2026, 3, 26, 14, 30, 0).unwrap();
+        assert_eq!(
+            format_entry(fixed_time, existing_text, entry_text),
+            expected_text
+        );
+    }
+
     #[test]
     fn e_flag_with_no_text_returns_error() {
         assert!(resolve_capture_text(vec![]).is_err());
@@ -59,13 +67,5 @@ mod tests {
     #[test]
     fn e_flag_with_text_returns_text() {
         assert_eq!(resolve_capture_text(vec!["hello".into()]).unwrap(), "hello");
-    }
-
-    fn verify_entry_format(existing_text: &str, entry_text: &str, expected_text: &str) {
-        let fixed_time = Local.with_ymd_and_hms(2026, 3, 26, 14, 30, 0).unwrap();
-        assert_eq!(
-            format_entry(fixed_time, existing_text, entry_text),
-            expected_text
-        );
     }
 }

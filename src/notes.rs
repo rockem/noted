@@ -14,13 +14,6 @@ impl NoteStore {
         Ok(Self { root })
     }
 
-    pub fn prepare(&self, path: &Path) -> Result<PathBuf, String> {
-        let full_path = self.root.join(path);
-        fs::create_dir_all(full_path.parent().unwrap())
-            .map_err(|e| format!("{}: {}", errors::DAILY_NOTE_CREATE_FAILED, e))?;
-        Ok(full_path)
-    }
-
     pub fn append_to_note(
         &self,
         path: &Path,
@@ -38,5 +31,12 @@ impl NoteStore {
         file.read_to_string(&mut existing).unwrap();
         writeln!(file, "{}", format(&existing, text)).unwrap();
         Ok(())
+    }
+
+    pub fn prepare(&self, path: &Path) -> Result<PathBuf, String> {
+        let full_path = self.root.join(path);
+        fs::create_dir_all(full_path.parent().unwrap())
+            .map_err(|e| format!("{}: {}", errors::DAILY_NOTE_CREATE_FAILED, e))?;
+        Ok(full_path)
     }
 }
