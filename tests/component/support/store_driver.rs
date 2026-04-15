@@ -62,6 +62,11 @@ impl StoreDriver {
         let _ = set_readonly(&self.path, true);
     }
 
+    pub fn today_note_content(&self) -> String {
+        self.today_note_file_created();
+        std::fs::read_to_string(self.today_note_path()).unwrap_or_default()
+    }
+
     pub fn today_note_file_created(&self) {
         let note_file = self.today_note_path();
         assert!(
