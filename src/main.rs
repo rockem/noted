@@ -50,7 +50,7 @@ fn resolve_capture_text(words: Vec<String>, is_tty: bool) -> Result<String, Stri
         }
         let mut s = String::new();
         std::io::stdin().read_to_string(&mut s).unwrap();
-        Ok(s.trim().to_string())
+        Ok(s.to_string())
     } else {
         Ok(words.join(" "))
     }
